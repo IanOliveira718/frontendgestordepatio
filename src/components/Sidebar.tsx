@@ -1,3 +1,4 @@
+import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Calendar,
@@ -13,13 +14,17 @@ import { cn } from "@/lib/utils";
 interface NavItemProps {
   icon: React.ElementType;
   label: string;
-  active?: boolean;
+  to: string;
   badge?: number;
 }
 
-function NavItem({ icon: Icon, label, active, badge }: NavItemProps) {
+function NavItem({ icon: Icon, label, to, badge }: NavItemProps) {
+  const location = useLocation();
+  const active = location.pathname === to;
+
   return (
-    <button
+    <Link
+      to={to}
       className={cn(
         "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
         active
@@ -39,7 +44,7 @@ function NavItem({ icon: Icon, label, active, badge }: NavItemProps) {
           {badge}
         </span>
       )}
-    </button>
+    </Link>
   );
 }
 
@@ -58,17 +63,17 @@ export function Sidebar() {
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
-          <NavItem icon={LayoutDashboard} label="Dashboard" active />
-          <NavItem icon={Calendar} label="Agendamentos" badge={5} />
-          <NavItem icon={Map} label="Mapa do Pátio" />
-          <NavItem icon={Package} label="Estoque" />
-          <NavItem icon={Truck} label="Veículos" />
-          <NavItem icon={BarChart3} label="Relatórios" />
+          <NavItem icon={LayoutDashboard} label="Dashboard" to="/" />
+          <NavItem icon={Calendar} label="Agendamentos" to="/schedules" badge={5} />
+          <NavItem icon={Map} label="Mapa do Pátio" to="/map" />
+          <NavItem icon={Package} label="Estoque" to="/inventory" />
+          <NavItem icon={Truck} label="Veículos" to="/vehicles" />
+          <NavItem icon={BarChart3} label="Relatórios" to="/reports" />
         </nav>
 
         <div className="border-t border-sidebar-border p-4">
-          <NavItem icon={Settings} label="Configurações" />
-          <NavItem icon={HelpCircle} label="Ajuda" />
+          <NavItem icon={Settings} label="Configurações" to="/settings" />
+          <NavItem icon={HelpCircle} label="Ajuda" to="/help" />
         </div>
       </div>
     </aside>
