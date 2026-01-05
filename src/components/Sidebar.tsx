@@ -57,7 +57,7 @@ export function Sidebar() {
             <Package className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="font-bold text-sidebar-foreground">YardControl</h2>
+            <h2 className="font-bold text-sidebar-foreground">Protótipo</h2>
             <p className="text-xs text-sidebar-foreground/60">v2.0</p>
           </div>
         </div>
