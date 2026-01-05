@@ -12,7 +12,7 @@ export function Header() {
               <Warehouse className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">YardControl</h1>
+              <h1 className="text-lg font-bold text-foreground">Protótipo</h1>
               <p className="text-xs text-muted-foreground">Gestão de Pátio</p>
             </div>
           </div>
