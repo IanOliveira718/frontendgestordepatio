@@ -53,11 +53,11 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-sidebar-border bg-sidebar lg:block">
       <div className="flex h-full flex-col">
-        <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-4 py-3">
+        <div className="flex h-20 items-center justify-center border-b border-sidebar-border bg-white px-4 py-3">
           <img 
             src={logoDfl} 
             alt="DFL Logo" 
-            className="h-14 w-auto object-contain brightness-0 invert"
+            className="h-14 w-auto object-contain"
           />
         </div>
 
