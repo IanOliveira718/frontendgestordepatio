@@ -2,14 +2,15 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
   Calendar,
-  Package,
   Map,
   Truck,
   BarChart3,
   Settings,
   HelpCircle,
+  Boxes,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import logoDfl from "@/assets/logo-dfl.jpg";
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -28,7 +29,7 @@ function NavItem({ icon: Icon, label, to, badge }: NavItemProps) {
       className={cn(
         "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200",
         active
-          ? "bg-primary text-primary-foreground"
+          ? "bg-sidebar-primary text-sidebar-primary-foreground"
           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
       )}
     >
@@ -38,7 +39,7 @@ function NavItem({ icon: Icon, label, to, badge }: NavItemProps) {
         <span
           className={cn(
             "flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-xs font-semibold",
-            active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-warning text-warning-foreground"
+            active ? "bg-sidebar-primary-foreground/20 text-sidebar-primary-foreground" : "bg-warning text-warning-foreground"
           )}
         >
           {badge}
@@ -52,21 +53,19 @@ export function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-sidebar-border bg-sidebar lg:block">
       <div className="flex h-full flex-col">
-        <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-            <Package className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="font-bold text-sidebar-foreground">Protótipo</h2>
-            <p className="text-xs text-sidebar-foreground/60">v2.0</p>
-          </div>
+        <div className="flex h-20 items-center justify-center border-b border-sidebar-border px-4 py-3">
+          <img 
+            src={logoDfl} 
+            alt="DFL Logo" 
+            className="h-14 w-auto object-contain brightness-0 invert"
+          />
         </div>
 
         <nav className="flex-1 space-y-1 p-4">
           <NavItem icon={LayoutDashboard} label="Dashboard" to="/" />
           <NavItem icon={Calendar} label="Agendamentos" to="/schedules" badge={5} />
           <NavItem icon={Map} label="Mapa do Pátio" to="/map" />
-          <NavItem icon={Package} label="Estoque" to="/inventory" />
+          <NavItem icon={Boxes} label="Estoque" to="/inventory" />
           <NavItem icon={Truck} label="Veículos" to="/vehicles" />
           <NavItem icon={BarChart3} label="Relatórios" to="/reports" />
         </nav>
