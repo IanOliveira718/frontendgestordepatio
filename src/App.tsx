@@ -11,6 +11,7 @@ import Vehicles from "./pages/Vehicles";
 import Reports from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Help from "./pages/Help";
+import Gate from "./pages/Gate";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/gate" element={<Gate />} />
           <Route path="/schedules" element={<Schedules />} />
           <Route path="/inventory" element={<Warehouses />} />
           <Route path="/map" element={<Map />} />
