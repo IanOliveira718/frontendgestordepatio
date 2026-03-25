@@ -65,7 +65,7 @@ export function Sidebar() {
         <nav className="flex-1 space-y-1 p-4">
           <NavItem icon={LayoutDashboard} label="Dashboard" to="/" />
           <NavItem icon={DoorOpen} label="Portaria" to="/gate" />
-          <NavItem icon={Calendar} label="Agendamentos" to="/schedules" badge={5} />
+          <NavItem icon={Calendar} label="Agendamentos" to="/schedules"/>
           <NavItem icon={Map} label="Mapa do Pátio" to="/map" />
           <NavItem icon={Boxes} label="Estoque" to="/inventory" />
           <NavItem icon={Truck} label="Veículos" to="/vehicles" />
