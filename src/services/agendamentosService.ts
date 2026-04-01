@@ -2,35 +2,56 @@ import { authHeaders } from "./authService";
 
 const BASE_URL = "http://localhost:8000/api/agendamentos";
 
+export type TipoUnidade = "pallet" | "volume";
+
 export interface PalletDescricao {
-  ordem: number;
+  ordem:    number;
   descricao: string;
 }
 
+export interface VolumeDescricao {
+  ordem:       number;
+  descricao:   string;
+  altura:      number;
+  largura:     number;
+  comprimento: number;
+}
+
 export interface AgendamentoAPI {
-  id: string;
-  date: string;
-  time: string;
-  plate: string;
-  driver: string;
-  type: "entrada" | "saida";
-  zone: string;
-  pallets: number;
+  id:          string;
+  date:        string;
+  time:        string;
+  plate:       string;
+  driver:      string;
+  type:        "entrada" | "saida";
+  zone:        string;
+  pallets:     number;
   nota_fiscal: string;
-  status: "agendado" | "confirmado" | "em_andamento" | "concluido" | "cancelado";
+  tipo_unidade: TipoUnidade;
+  status:      "agendado" | "confirmado" | "em_andamento" | "concluido" | "cancelado";
   descricoes_pallets?: PalletDescricao[];
+  descricoes_volumes?: VolumeDescricao[];
 }
 
 export interface AgendamentoPayload {
-  plate: string;
-  driver: string;
-  type: string;
-  zone: string;
-  date: string;
-  time: string;
-  pallets: number;
-  nota_fiscal: string;
+  plate:        string;
+  driver:       string;
+  type:         string;
+  zone:         string;
+  date:         string;
+  time:         string;
+  pallets:      number;
+  nota_fiscal:  string;
+  tipo_unidade: TipoUnidade;
   descricoes_pallets: PalletDescricao[];
+  descricoes_volumes: VolumeDescricao[];
+}
+
+ // GET /api/agendamentos/<id>/
+export async function fetchAgendamentoById(id: string): Promise<AgendamentoAPI> {
+  const res = await fetch(`${BASE_URL}/${id}/`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Agendamento não encontrado.");
+  return res.json();
 }
 
 export async function fetchAgendamentosByDate(date: string): Promise<AgendamentoAPI[]> {
@@ -52,23 +73,20 @@ export async function fetchAgendamentosByPeriod(
 }
 
 export async function createAgendamento(payload: AgendamentoPayload): Promise<AgendamentoAPI> {
-
-  console.log(JSON.stringify(payload));
-
   const res = await fetch(`${BASE_URL}/`, {
-    method: "POST",
+    method:  "POST",
     headers: authHeaders(),
-    body: JSON.stringify(payload),
+    body:    JSON.stringify(payload),
   });
   if (!res.ok) {
     const err = await res.json();
-    // Extrai mensagem legível de erros de validação do DRF
     const message =
       err?.descricoes_pallets ??
+      err?.descricoes_volumes ??
       err?.nota_fiscal ??
       Object.values(err).flat().join(" ") ??
       "Erro ao criar agendamento.";
-    throw new Error(Array.isArray(message) ? message.join(" ") : message);
+    throw new Error(Array.isArray(message) ? message.join(" ") : String(message));
   }
   return res.json();
 }
@@ -78,9 +96,9 @@ export async function updateAgendamentoStatus(
   status: AgendamentoAPI["status"]
 ): Promise<AgendamentoAPI> {
   const res = await fetch(`${BASE_URL}/${id}/status/`, {
-    method: "PATCH",
+    method:  "PATCH",
     headers: authHeaders(),
-    body: JSON.stringify({ status }),
+    body:    JSON.stringify({ status }),
   });
   if (!res.ok) {
     const err = await res.json();
@@ -91,7 +109,7 @@ export async function updateAgendamentoStatus(
 
 export async function cancelAgendamento(id: string): Promise<void> {
   const res = await fetch(`${BASE_URL}/${id}/cancelar/`, {
-    method: "DELETE",
+    method:  "DELETE",
     headers: authHeaders(),
   });
   if (!res.ok) {

@@ -1,93 +1,54 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  format,
-  isSameDay,
-  startOfMonth,
-  endOfMonth,
-  eachDayOfInterval,
-  startOfWeek,
-  endOfWeek,
-  addMonths,
-  subMonths,
+  format, isSameDay, startOfMonth, endOfMonth,
+  eachDayOfInterval, startOfWeek, endOfWeek, addMonths, subMonths,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
-  Calendar as CalendarIcon,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Search,
-  Truck,
-  Clock,
-  Package,
-  MapPin,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  X,
-  CheckCircle2,
-  AlertCircle,
-  Timer,
-  FileText,
+  Calendar as CalendarIcon, ChevronLeft, ChevronRight, Plus, Search,
+  Truck, Clock, Package, MapPin, MoreVertical, Pencil, Trash2, X,
+  CheckCircle2, AlertCircle, Timer, FileText, Box,
 } from "lucide-react";
-import { Sidebar } from "@/components/Sidebar";
-import { Header } from "@/components/Header";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { Sidebar }  from "@/components/Sidebar";
+import { Header }   from "@/components/Header";
+import { Button }   from "@/components/ui/button";
+import { Input }    from "@/components/ui/input";
+import { Badge }    from "@/components/ui/badge";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+  Dialog, DialogContent, DialogDescription,
+  DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
+import { cn }   from "@/lib/utils";
 import {
-  AgendamentoAPI,
-  fetchAgendamentosByPeriod,
-  createAgendamento,
-  updateAgendamentoStatus,
-  cancelAgendamento,
+  AgendamentoAPI, TipoUnidade,
+  fetchAgendamentosByPeriod, updateAgendamentoStatus, cancelAgendamento,
+  fetchAgendamentoById,
 } from "@/services/agendamentosService";
 
 interface Schedule {
-  id: string;
-  date: Date;
-  time: string;
-  plate: string;
-  driver: string;
-  type: "entrada" | "saida";
-  zone: string;
-  pallets: number;
-  nota_fiscal: string;
-  status: AgendamentoAPI["status"];
+  id:           string;
+  date:         Date;
+  time:         string;
+  plate:        string;
+  driver:       string;
+  type:         "entrada" | "saida";
+  zone:         string;
+  pallets:      number;
+  nota_fiscal:  string;
+  tipo_unidade: TipoUnidade;
+  status:       AgendamentoAPI["status"];
 }
 
 function apiToSchedule(a: AgendamentoAPI): Schedule {
@@ -95,10 +56,7 @@ function apiToSchedule(a: AgendamentoAPI): Schedule {
   return { ...a, date: new Date(year, month - 1, day) };
 }
 
-const statusConfig: Record<
-  Schedule["status"],
-  { label: string; icon: React.ElementType; color: string }
-> = {
+const statusConfig: Record<Schedule["status"], { label: string; icon: React.ElementType; color: string }> = {
   agendado:     { label: "Agendado",     icon: Clock,        color: "bg-muted text-muted-foreground" },
   confirmado:   { label: "Confirmado",   icon: CheckCircle2, color: "bg-primary/15 text-primary" },
   em_andamento: { label: "Em andamento", icon: Timer,        color: "bg-primary/15 text-primary" },
@@ -111,55 +69,42 @@ const typeConfig = {
   saida:   { label: "Saída",   color: "bg-primary/15 text-primary border-primary/30", icon: "↑" },
 };
 
-// Tipo do formData compartilhado entre criação e edição
 interface FormData {
-  plate:       string;
-  driver:      string;
-  type:        string;
-  zone:        string;
-  date:        string;
-  time:        string;
-  pallets:     string;
-  nota_fiscal: string;
-  status:      Schedule["status"];
+  plate:        string;
+  driver:       string;
+  type:         string;
+  zone:         string;
+  date:         string;
+  time:         string;
+  pallets:      string;
+  nota_fiscal:  string;
+  tipo_unidade: TipoUnidade;
+  status:       Schedule["status"];
 }
 
 const emptyForm = (): FormData => ({
   plate: "", driver: "", type: "entrada", zone: "A1",
-  date: "", time: "", pallets: "", nota_fiscal: "", status: "agendado",
+  date: "", time: "", pallets: "", nota_fiscal: "",
+  tipo_unidade: "pallet", status: "agendado",
 });
 
 export default function Schedules() {
-  const [schedules, setSchedules]         = useState<Schedule[]>([]);
-  const [loading, setLoading]             = useState(false);
-  const [currentMonth, setCurrentMonth]   = useState(new Date());
-  const [selectedDate, setSelectedDate]   = useState<Date | null>(new Date());
-  const [searchTerm, setSearchTerm]       = useState("");
-  const [filterType, setFilterType]       = useState<string>("all");
-  const [filterStatus, setFilterStatus]   = useState<string>("all");
-  const [filterZone, setFilterZone]       = useState<string>("all");
-  const [editDialogOpen, setEditDialogOpen]   = useState(false);
+  const [schedules,     setSchedules]     = useState<Schedule[]>([]);
+  const [loading,       setLoading]       = useState(false);
+  const [currentMonth,  setCurrentMonth]  = useState(new Date());
+  const [selectedDate,  setSelectedDate]  = useState<Date | null>(new Date());
+  const [searchTerm,    setSearchTerm]    = useState("");
+  const [filterType,    setFilterType]    = useState("all");
+  const [filterStatus,  setFilterStatus]  = useState("all");
+  const [filterZone,    setFilterZone]    = useState("all");
+  const [editDialogOpen,   setEditDialogOpen]   = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [newDialogOpen, setNewDialogOpen]     = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
-  const [formData, setFormData]           = useState<FormData>(emptyForm());
+  const [formData, setFormData] = useState<FormData>(emptyForm());
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [agendamentoDetail, setAgendamentoDetail] = useState<AgendamentoAPI | null>(null);
 
-  // Descrições de pallets — usadas apenas no formulário de CRIAÇÃO
-  const [descricoes, setDescricoes] = useState<string[]>([]);
-
-  // Sincroniza o array de descrições com a quantidade de pallets
-  useEffect(() => {
-    const qtd = parseInt(formData.pallets) || 0;
-    setDescricoes((prev) => {
-      if (qtd > prev.length) return [...prev, ...Array(qtd - prev.length).fill("")];
-      return prev.slice(0, qtd);
-    });
-  }, [formData.pallets]);
-
-  const setDescricao = (index: number, value: string) =>
-    setDescricoes((prev) => prev.map((d, i) => (i === index ? value : d)));
-
-  // ── Carregar agendamentos do mês ───────────────────────────────────────────
+  // ── Carregar ───────────────────────────────────────────────────────────────
   const loadSchedules = useCallback(async () => {
     setLoading(true);
     try {
@@ -176,14 +121,12 @@ export default function Schedules() {
 
   useEffect(() => { loadSchedules(); }, [loadSchedules]);
 
-  const monthStart    = startOfMonth(currentMonth);
-  const monthEnd      = endOfMonth(currentMonth);
-  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 0 });
-  const calendarEnd   = endOfWeek(monthEnd,     { weekStartsOn: 0 });
-  const calendarDays  = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+  const calendarDays = eachDayOfInterval({
+    start: startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 0 }),
+    end:   endOfWeek(endOfMonth(currentMonth),     { weekStartsOn: 0 }),
+  });
 
-  const getSchedulesForDate = (date: Date) =>
-    schedules.filter((s) => isSameDay(s.date, date));
+  const getSchedulesForDate = (date: Date) => schedules.filter((s) => isSameDay(s.date, date));
 
   const filteredSchedules = schedules.filter((s) => {
     const matchesDate   = selectedDate ? isSameDay(s.date, selectedDate) : true;
@@ -195,73 +138,35 @@ export default function Schedules() {
     return matchesDate && matchesSearch && matchesType && matchesStatus && matchesZone;
   });
 
-  // ── Criar ──────────────────────────────────────────────────────────────────
-  const handleNewSchedule = () => {
-    setFormData({
-      ...emptyForm(),
-      date: selectedDate ? format(selectedDate, "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-    });
-    setDescricoes([]);
-    setNewDialogOpen(true);
-  };
+  // ── Editar — só status ────────────────────────────────────────────────────
+ const handleEdit = async (schedule: Schedule) => {
+  setSelectedSchedule(schedule);
+  setFormData({
+    plate:        schedule.plate,
+    driver:       schedule.driver,
+    type:         schedule.type,
+    zone:         schedule.zone,
+    date:         format(schedule.date, "yyyy-MM-dd"),
+    time:         schedule.time,
+    pallets:      schedule.pallets.toString(),
+    nota_fiscal:  schedule.nota_fiscal,
+    tipo_unidade: schedule.tipo_unidade,
+    status:       schedule.status,
+  });
 
-  const validateCreate = (): string | null => {
-    const qtd = parseInt(formData.pallets) || 0;
-    if (!formData.nota_fiscal.trim()) return "Nota fiscal é obrigatória.";
-    if (qtd === 0)                    return "Informe a quantidade de pallets.";
-    if (descricoes.length !== qtd)    return `Informe exatamente ${qtd} descrição(ões) de pallets.`;
-    if (descricoes.some((d) => !d.trim())) return "Todas as descrições de pallets devem ser preenchidas.";
-    return null;
-  };
-
-  const handleCreateSchedule = async () => {
-    const erro = validateCreate();
-    if (erro) {
-      toast({ title: "Dados inválidos", description: erro, variant: "destructive" });
-      return;
-    }
-    try {
-      const created = await createAgendamento({
-        plate:       formData.plate,
-        driver:      formData.driver,
-        type:        formData.type,
-        zone:        formData.zone,
-        date:        formData.date,
-        time:        formData.time,
-        pallets:     parseInt(formData.pallets),
-        nota_fiscal: formData.nota_fiscal.trim(),
-        descricoes_pallets: descricoes.map((descricao, i) => ({
-          ordem: i + 1,
-          descricao: descricao.trim(),
-        })),
-      });
-      setSchedules((prev) => [...prev, apiToSchedule(created)]);
-      toast({
-        title: "Agendamento criado",
-        description: `Veículo ${created.plate} agendado para ${format(new Date(formData.date), "dd/MM/yyyy")} às ${created.time}`,
-      });
-      setNewDialogOpen(false);
-    } catch (err: any) {
-      toast({ title: "Erro", description: err.message ?? "Não foi possível criar o agendamento.", variant: "destructive" });
-    }
-  };
-
-  // ── Editar — atualiza apenas o status via PATCH ────────────────────────────
-  const handleEdit = (schedule: Schedule) => {
-    setSelectedSchedule(schedule);
-    setFormData({
-      plate:       schedule.plate,
-      driver:      schedule.driver,
-      type:        schedule.type,
-      zone:        schedule.zone,
-      date:        format(schedule.date, "yyyy-MM-dd"),
-      time:        schedule.time,
-      pallets:     schedule.pallets.toString(),
-      nota_fiscal: schedule.nota_fiscal,
-      status:      schedule.status,
-    });
-    setEditDialogOpen(true);
-  };
+  // Busca o detalhe completo com descrições
+  setDetailLoading(true);
+  setAgendamentoDetail(null);
+  setEditDialogOpen(true);
+  try {
+    const detail = await fetchAgendamentoById(schedule.id);
+    setAgendamentoDetail(detail);
+  } catch {
+    toast({ title: "Erro", description: "Não foi possível carregar os detalhes.", variant: "destructive" });
+  } finally {
+    setDetailLoading(false);
+  }
+};
 
   const handleSaveEdit = async () => {
     if (!selectedSchedule) return;
@@ -269,7 +174,7 @@ export default function Schedules() {
       if (formData.status !== selectedSchedule.status) {
         const updated = await updateAgendamentoStatus(selectedSchedule.id, formData.status);
         setSchedules((prev) =>
-          prev.map((s) => (s.id === selectedSchedule.id ? apiToSchedule(updated) : s))
+          prev.map((s) => s.id === selectedSchedule.id ? apiToSchedule(updated) : s)
         );
       }
       toast({ title: "Agendamento atualizado", description: `Status do veículo ${formData.plate} atualizado.` });
@@ -307,7 +212,6 @@ export default function Schedules() {
   };
 
   const hasActiveFilters = searchTerm || filterType !== "all" || filterStatus !== "all" || filterZone !== "all" || selectedDate;
-  const qtdPallets = parseInt(formData.pallets) || 0;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -318,14 +222,8 @@ export default function Schedules() {
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-2xl font-bold text-foreground">Agendamentos</h1>
-              <p className="text-sm text-muted-foreground">
-                Gerencie todos os agendamentos de entrada e saída do pátio
-              </p>
+              <p className="text-sm text-muted-foreground">Gerencie todos os agendamentos de entrada e saída do pátio</p>
             </div>
-            <Button onClick={handleNewSchedule} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Novo Agendamento
-            </Button>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
@@ -344,28 +242,24 @@ export default function Schedules() {
                   </Button>
                 </div>
               </div>
-
               <div className="grid grid-cols-7 gap-1 text-center">
-                {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
-                  <div key={day} className="py-2 text-xs font-medium text-muted-foreground">{day}</div>
+                {["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"].map((d) => (
+                  <div key={d} className="py-2 text-xs font-medium text-muted-foreground">{d}</div>
                 ))}
                 {calendarDays.map((day) => {
-                  const daySchedules  = getSchedulesForDate(day);
-                  const isSelected    = selectedDate && isSameDay(day, selectedDate);
+                  const daySchedules   = getSchedulesForDate(day);
+                  const isSelected     = selectedDate && isSameDay(day, selectedDate);
                   const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
-                  const isToday       = isSameDay(day, new Date());
+                  const isToday        = isSameDay(day, new Date());
                   return (
-                    <button
-                      key={day.toISOString()}
-                      onClick={() => setSelectedDate(isSelected ? null : day)}
+                    <button key={day.toISOString()} onClick={() => setSelectedDate(isSelected ? null : day)}
                       className={cn(
                         "relative flex h-10 items-center justify-center rounded-lg text-sm transition-all",
                         isCurrentMonth ? "text-foreground" : "text-muted-foreground/50",
                         isSelected && "bg-primary text-primary-foreground",
                         !isSelected && isToday && "bg-accent/20 font-semibold text-accent",
                         !isSelected && !isToday && "hover:bg-muted"
-                      )}
-                    >
+                      )}>
                       {format(day, "d")}
                       {daySchedules.length > 0 && !isSelected && (
                         <span className="absolute bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-primary" />
@@ -379,7 +273,6 @@ export default function Schedules() {
                   );
                 })}
               </div>
-
               {selectedDate && (
                 <div className="mt-4 rounded-lg bg-muted/50 p-3">
                   <p className="text-sm font-medium text-foreground">
@@ -398,7 +291,8 @@ export default function Schedules() {
               <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-card">
                 <div className="relative flex-1 min-w-[200px]">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input placeholder="Buscar por placa ou motorista..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
+                  <Input placeholder="Buscar por placa ou motorista..." value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)} className="pl-9" />
                 </div>
                 <Select value={filterType} onValueChange={setFilterType}>
                   <SelectTrigger className="w-[130px]"><SelectValue placeholder="Tipo" /></SelectTrigger>
@@ -455,7 +349,8 @@ export default function Schedules() {
                     const typeInfo   = typeConfig[schedule.type];
                     const StatusIcon = statusInfo.icon;
                     return (
-                      <div key={schedule.id} className="group flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:border-primary/30 hover:shadow-card">
+                      <div key={schedule.id}
+                        className="group flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-all duration-200 hover:border-primary/30 hover:shadow-card">
                         <div className="flex h-14 w-14 flex-col items-center justify-center rounded-lg bg-muted">
                           <span className="text-lg font-bold text-foreground">{schedule.time.split(":")[0]}</span>
                           <span className="text-xs text-muted-foreground">:{schedule.time.split(":")[1]}</span>
@@ -478,11 +373,12 @@ export default function Schedules() {
                           </div>
 
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Package className="h-4 w-4" />
-                            {schedule.pallets} pallets
+                            {schedule.tipo_unidade === "pallet"
+                              ? <Package className="h-4 w-4" />
+                              : <Box className="h-4 w-4" />}
+                            {schedule.pallets} {schedule.tipo_unidade === "pallet" ? "pallets" : "volumes"}
                           </div>
 
-                          {/* Nota fiscal */}
                           {schedule.nota_fiscal && (
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                               <FileText className="h-3.5 w-3.5" />
@@ -532,88 +428,124 @@ export default function Schedules() {
         </main>
       </div>
 
-      {/* Dialog de Edição — só altera status */}
-      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Pencil className="h-5 w-5 text-primary" />
-              Editar Agendamento
-            </DialogTitle>
-            <DialogDescription>Atualize o status do agendamento.</DialogDescription>
-          </DialogHeader>
-          <ScheduleForm formData={formData} setFormData={setFormData} showStatus readOnly />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSaveEdit}>Salvar Alterações</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Dialog de Edição */}
+<Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+  <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+    <DialogHeader>
+      <DialogTitle className="flex items-center gap-2">
+        <Pencil className="h-5 w-5 text-primary" />
+        Editar Agendamento
+      </DialogTitle>
+      <DialogDescription>Atualize o status do agendamento.</DialogDescription>
+    </DialogHeader>
 
-      {/* Dialog de Novo Agendamento — com nota fiscal e descrições */}
-      <Dialog open={newDialogOpen} onOpenChange={setNewDialogOpen}>
-        <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5 text-primary" />
-              Novo Agendamento
-            </DialogTitle>
-            <DialogDescription>Agende a entrada ou saída de um veículo no pátio.</DialogDescription>
-          </DialogHeader>
-          <ScheduleForm formData={formData} setFormData={setFormData} />
+    <div className="space-y-4 py-2">
 
-          {/* Nota Fiscal */}
-          <div className="space-y-2 px-0">
-            <Label htmlFor="nota_fiscal" className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-muted-foreground" />
-              Nota Fiscal <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="nota_fiscal"
-              placeholder="Ex: NF-000123"
-              value={formData.nota_fiscal}
-              onChange={(e) => setFormData({ ...formData, nota_fiscal: e.target.value })}
-            />
-          </div>
+      {/* Dados principais — somente leitura */}
+      <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Placa</span>
+          <span className="font-mono font-semibold">{formData.plate}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Motorista</span>
+          <span>{formData.driver}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Data / Hora</span>
+          <span>{formData.date} às {formData.time}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Zona</span>
+          <span className="font-mono">{formData.zone}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Nota Fiscal</span>
+          <span className="flex items-center gap-1.5">
+            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+            {formData.nota_fiscal}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Unidades</span>
+          <span className="flex items-center gap-1.5">
+            {formData.tipo_unidade === "pallet"
+              ? <Package className="h-3.5 w-3.5 text-muted-foreground" />
+              : <Box className="h-3.5 w-3.5 text-muted-foreground" />}
+            {formData.pallets} {formData.tipo_unidade === "pallet" ? "pallets" : "volumes"}
+          </span>
+        </div>
+      </div>
 
-          {/* Descrições dos pallets */}
-          {qtdPallets > 0 && (
-            <div className="space-y-3">
-              <Label className="flex items-center gap-2">
-                <Package className="h-4 w-4 text-muted-foreground" />
-                Descrição dos Pallets
-                <span className="text-xs text-muted-foreground">
-                  ({descricoes.filter((d) => d.trim()).length}/{qtdPallets} preenchidos)
-                </span>
-              </Label>
-              <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
-                {descricoes.map((desc, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-                      {i + 1}
+      {/* Descrições — carregadas via API */}
+      {detailLoading ? (
+        <div className="flex items-center justify-center py-4">
+          <p className="text-sm text-muted-foreground">Carregando descrições...</p>
+        </div>
+      ) : agendamentoDetail && (
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2 text-sm">
+            {formData.tipo_unidade === "pallet"
+              ? <Package className="h-4 w-4 text-muted-foreground" />
+              : <Box className="h-4 w-4 text-muted-foreground" />}
+            {formData.tipo_unidade === "pallet" ? "Descrição dos Pallets" : "Descrição dos Volumes"}
+          </Label>
+
+          <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+            {formData.tipo_unidade === "pallet"
+              ? (agendamentoDetail.descricoes_pallets ?? []).map((p) => (
+                  <div key={p.ordem} className="flex items-start gap-2 text-sm">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                      {p.ordem}
                     </span>
-                    <Input
-                      placeholder={`Descrição do pallet ${i + 1}`}
-                      value={desc}
-                      onChange={(e) => setDescricao(i, e.target.value)}
-                      className="h-8 text-sm"
-                    />
+                    <span className="text-foreground">{p.descricao}</span>
                   </div>
-                ))}
-              </div>
-              {descricoes.some((d) => !d.trim()) && (
-                <p className="text-xs text-destructive">Todas as descrições são obrigatórias.</p>
-              )}
-            </div>
-          )}
+                ))
+              : (agendamentoDetail.descricoes_volumes ?? []).map((v) => (
+                  <div key={v.ordem} className="space-y-1">
+                    <div className="flex items-start gap-2 text-sm">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                        {v.ordem}
+                      </span>
+                      <span className="font-medium text-foreground">{v.descricao}</span>
+                    </div>
+                    <div className="ml-7 flex gap-4 text-xs text-muted-foreground">
+                      <span>A: {v.altura} cm</span>
+                      <span>L: {v.largura} cm</span>
+                      <span>C: {v.comprimento} cm</span>
+                    </div>
+                  </div>
+                ))
+            }
+          </div>
+        </div>
+      )}
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setNewDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={handleCreateSchedule}>Criar Agendamento</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Status — editável */}
+      <div className="space-y-2">
+        <Label>Status</Label>
+        <Select
+          value={formData.status}
+          onValueChange={(v) => setFormData({ ...formData, status: v as Schedule["status"] })}
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="agendado">Agendado</SelectItem>
+            <SelectItem value="confirmado">Confirmado</SelectItem>
+            <SelectItem value="em_andamento">Em andamento</SelectItem>
+            <SelectItem value="concluido">Concluído</SelectItem>
+            <SelectItem value="cancelado">Cancelado</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
 
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancelar</Button>
+      <Button onClick={handleSaveEdit}>Salvar Alterações</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
       {/* Alert de Cancelamento */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
@@ -632,104 +564,6 @@ export default function Schedules() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
-}
-
-// ── ScheduleForm ─────────────────────────────────────────────────────────────
-
-interface ScheduleFormProps {
-  formData: FormData;
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
-  showStatus?: boolean;
-  readOnly?: boolean;  // quando true, desabilita campos que não devem ser editados
-}
-
-function ScheduleForm({ formData, setFormData, showStatus, readOnly }: ScheduleFormProps) {
-  return (
-    <div className="space-y-4 py-2">
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="plate" className="flex items-center gap-2">
-            <Truck className="h-4 w-4 text-muted-foreground" />Placa
-          </Label>
-          <Input
-            id="plate"
-            placeholder="ABC-1234"
-            value={formData.plate}
-            onChange={(e) => setFormData({ ...formData, plate: e.target.value.toUpperCase() })}
-            className="font-mono"
-            disabled={readOnly}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="driver">Motorista</Label>
-          <Input
-            id="driver"
-            placeholder="Nome do motorista"
-            value={formData.driver}
-            onChange={(e) => setFormData({ ...formData, driver: e.target.value })}
-            disabled={readOnly}
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Tipo de Operação</Label>
-          <Select value={formData.type} onValueChange={(v) => setFormData({ ...formData, type: v })} disabled={readOnly}>
-            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="entrada">↓ Entrada</SelectItem>
-              <SelectItem value="saida">↑ Saída</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" />Zona</Label>
-          <Select value={formData.zone} onValueChange={(v) => setFormData({ ...formData, zone: v })} disabled={readOnly}>
-            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="A1">Zona A1</SelectItem>
-              <SelectItem value="A2">Zona A2</SelectItem>
-              <SelectItem value="B1">Zona B1</SelectItem>
-              <SelectItem value="B2">Zona B2</SelectItem>
-              <SelectItem value="C1">Zona C1</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-3 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="date">Data</Label>
-          <Input id="date" type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} disabled={readOnly} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="time">Horário</Label>
-          <Input id="time" type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} disabled={readOnly} />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="pallets" className="flex items-center gap-2"><Package className="h-4 w-4 text-muted-foreground" />Pallets</Label>
-          <Input id="pallets" type="number" min="1" placeholder="0" value={formData.pallets} onChange={(e) => setFormData({ ...formData, pallets: e.target.value })} disabled={readOnly} />
-        </div>
-      </div>
-
-      {showStatus && (
-        <div className="space-y-2">
-          <Label>Status</Label>
-          <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as FormData["status"] })}>
-            <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="agendado">Agendado</SelectItem>
-              <SelectItem value="confirmado">Confirmado</SelectItem>
-              <SelectItem value="em_andamento">Em andamento</SelectItem>
-              <SelectItem value="concluido">Concluído</SelectItem>
-              <SelectItem value="cancelado">Cancelado</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      )}
     </div>
   );
 }
