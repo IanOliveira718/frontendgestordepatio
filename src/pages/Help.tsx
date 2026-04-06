@@ -82,7 +82,7 @@ const Help = () => {
           </div>
 
           {/* Quick Links */}
-          <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mb-8 grid gap-4 sm:grid-cols-1 lg:grid-cols-3">
             <Card className="cursor-pointer transition-all hover:shadow-lg">
               <CardHeader className="flex flex-row items-center gap-4">
                 <div className="rounded-lg bg-primary/10 p-3">
@@ -91,17 +91,6 @@ const Help = () => {
                 <div>
                   <CardTitle className="text-base">Documentação</CardTitle>
                   <CardDescription>Guias detalhados</CardDescription>
-                </div>
-              </CardHeader>
-            </Card>
-            <Card className="cursor-pointer transition-all hover:shadow-lg">
-              <CardHeader className="flex flex-row items-center gap-4">
-                <div className="rounded-lg bg-success/10 p-3">
-                  <MessageCircle className="h-6 w-6 text-success" />
-                </div>
-                <div>
-                  <CardTitle className="text-base">Chat Online</CardTitle>
-                  <CardDescription>Fale conosco agora</CardDescription>
                 </div>
               </CardHeader>
             </Card>

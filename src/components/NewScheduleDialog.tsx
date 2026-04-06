@@ -333,7 +333,7 @@ export function NewScheduleDialog({ children, onCreated }: NewScheduleDialogProp
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Comprimento (cm)</Label>
+                            <Label className="text-xs text-muted-foreground">Comp. (cm)</Label>
                             <Input
                               type="number" min="0" step="0.01" placeholder="0.00"
                               value={vol.comprimento}
