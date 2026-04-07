@@ -65,10 +65,12 @@ export function Sidebar() {
           <NavItem icon={LayoutDashboard} label="Dashboard" to="/" />
           <NavItem icon={DoorOpen} label="Portaria" to="/gate" />
           <NavItem icon={Calendar} label="Agendamentos" to="/schedules"/>
-          <NavItem icon={Map} label="Mapa do Pátio" to="/map" />
-          <NavItem icon={Boxes} label="Estoque" to="/inventory" />
-          <NavItem icon={Truck} label="Veículos" to="/vehicles" />
-          <NavItem icon={BarChart3} label="Relatórios" to="/reports" />
+          {/*<NavItem icon={Map} label="Mapa do Pátio" to="/map" />*/}
+          {/*<NavItem icon={Boxes} label="Estoque" to="/inventory" />*/}
+          {/*<NavItem icon={Truck} label="Veículos" to="/vehicles" />*/}
+          {/*<NavItem icon={BarChart3} label="Relatórios" to="/reports" />*/}
+          <NavItem icon={Truck} label="Patios" to="/patios" />
+          <NavItem icon={BarChart3} label="Zonas" to="/zones" />
         </nav>
 
         <div className="border-t border-sidebar-border p-4">

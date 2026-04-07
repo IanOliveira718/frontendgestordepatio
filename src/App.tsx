@@ -17,6 +17,9 @@ import Gate from "./pages/Gate";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Patios from "./pages/Patios";
+import Zones from "./pages/Zones";
+
 
 const queryClient = new QueryClient();
 
@@ -36,12 +39,14 @@ const App = () => (
             <Route path="/"          element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/gate"      element={<ProtectedRoute><Gate /></ProtectedRoute>} />
             <Route path="/schedules" element={<ProtectedRoute><Schedules /></ProtectedRoute>} />
-            <Route path="/inventory" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />
-            <Route path="/map"       element={<ProtectedRoute><Map /></ProtectedRoute>} />
-            <Route path="/vehicles"  element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />
-            <Route path="/reports"   element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+            {/*<Route path="/inventory" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />*/}
+            {/*<Route path="/map"       element={<ProtectedRoute><Map /></ProtectedRoute>} />*/}
+            {/*<Route path="/vehicles"  element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />*/}
+            {/*<Route path="/reports"   element={<ProtectedRoute><Reports /></ProtectedRoute>} />*/}
             <Route path="/settings"  element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/help"      element={<ProtectedRoute><Help /></ProtectedRoute>} />
+            <Route path="/patios"  element={<ProtectedRoute><Patios /></ProtectedRoute>} />
+            <Route path="/zones"      element={<ProtectedRoute><Zones /></ProtectedRoute>} />
 
             <Route path="*" element={<NotFound />} />
           </Routes>
