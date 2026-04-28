@@ -19,6 +19,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Patios from "./pages/Patios";
 import Zones from "./pages/Zones";
+import Pallets from "./pages/Pallets";
 
 
 const queryClient = new QueryClient();
@@ -47,7 +48,7 @@ const App = () => (
             <Route path="/help"      element={<ProtectedRoute><Help /></ProtectedRoute>} />
             <Route path="/patios"  element={<ProtectedRoute><Patios /></ProtectedRoute>} />
             <Route path="/zones"      element={<ProtectedRoute><Zones /></ProtectedRoute>} />
-
+            <Route path="/pallets" element={<ProtectedRoute><Pallets /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

@@ -9,6 +9,7 @@ import {
   HelpCircle,
   Boxes,
   DoorOpen,
+  Package,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logoDfl from "@/assets/logo-dfl-vazada.png";
@@ -71,6 +72,7 @@ export function Sidebar() {
           {/*<NavItem icon={BarChart3} label="Relatórios" to="/reports" />*/}
           <NavItem icon={Truck} label="Patios" to="/patios" />
           <NavItem icon={BarChart3} label="Zonas" to="/zones" />
+          <NavItem icon={Package} label="Pallets" to="/pallets" />
         </nav>
 
         <div className="border-t border-sidebar-border p-4">
