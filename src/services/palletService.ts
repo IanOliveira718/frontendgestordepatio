@@ -1,6 +1,6 @@
 import { authHeaders } from "./authService";
 
-const BASE_URL = "http://localhost:8000/api/agendamentos/pallets";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL+"/api/agendamentos/pallets";
 
 export type StatusPallet = "pendente" | "armazenado" | "retirado" | "avariado";
 

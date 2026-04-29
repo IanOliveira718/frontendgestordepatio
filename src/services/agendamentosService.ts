@@ -1,6 +1,8 @@
 import { authHeaders } from "./authService";
 
-const BASE_URL = "http://localhost:8000/api/agendamentos";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL+"/api/agendamentos"
+
+;
 
 export type TipoUnidade = "pallet" | "volume";
 
