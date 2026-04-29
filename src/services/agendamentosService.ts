@@ -1,8 +1,6 @@
 import { authHeaders } from "./authService";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL+"/api/agendamentos"
-
-;
+const BASE_URL = import.meta.env.VITE_API_URL+"/api/agendamentos";
 
 export type TipoUnidade = "pallet" | "volume";
 

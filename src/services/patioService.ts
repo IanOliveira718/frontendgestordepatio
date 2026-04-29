@@ -1,6 +1,6 @@
 import { authHeaders } from "./authService";
 
-const BASE = process.env.NEXT_PUBLIC_API_URL+"/api";
+const BASE = import.meta.env.VITE_API_URL+"/api";
 
 export type TipoZona = "principal" | "refrigerada" | "expedicao" | "recebimento" | "reserva" | "avariado";
 

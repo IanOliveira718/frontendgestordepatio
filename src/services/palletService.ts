@@ -1,6 +1,6 @@
 import { authHeaders } from "./authService";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL+"/api/agendamentos/pallets";
+const BASE_URL = import.meta.env.VITE_API_URL+"/api/agendamentos/pallets";
 
 export type StatusPallet = "pendente" | "armazenado" | "retirado" | "avariado";
 
