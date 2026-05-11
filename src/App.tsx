@@ -20,6 +20,7 @@ import Register from "./pages/Register";
 import Patios from "./pages/Patios";
 import Zones from "./pages/Zones";
 import Pallets from "./pages/Pallets";
+import Home from "./pages/Home";
 
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
 
             {/* Rotas protegidas */}
             <Route path="/"          element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/home"          element={<ProtectedRoute><Home /></ProtectedRoute>} />
             <Route path="/gate"      element={<ProtectedRoute><Gate /></ProtectedRoute>} />
             <Route path="/schedules" element={<ProtectedRoute><Schedules /></ProtectedRoute>} />
             {/*<Route path="/inventory" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />*/}
