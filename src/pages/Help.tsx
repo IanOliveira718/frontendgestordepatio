@@ -55,7 +55,7 @@ const Help = () => {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <div className="lg:pl-64">
+      <div className="lg:pl-20">
         <Header />
         
         <main className="p-6">

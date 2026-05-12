@@ -181,7 +181,7 @@ export default function Zones() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <div className="flex-1 lg:ml-64">
+      <div className="flex-1 lg:ml-20">
         <Header />
         <main className="p-6 space-y-6">
 
