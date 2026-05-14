@@ -1,8 +1,16 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { usePermissions } from "@/context/usePermissions";
 
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+interface ProtectedRouteProps {
+  children:   React.ReactNode;
+  /** Chave de permissão do usePermissions. Se omitida, apenas exige autenticação. */
+  permission?: keyof ReturnType<typeof usePermissions>;
+}
+
+export function ProtectedRoute({ children, permission }: ProtectedRouteProps) {
   const { isAuth, loading } = useAuth();
+  const permissions         = usePermissions();
 
   if (loading) {
     return (
@@ -12,8 +20,11 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuth) {
-    return <Navigate to="/login" replace />;
+  if (!isAuth) return <Navigate to="/login" replace />;
+
+  // Se uma permissão específica for exigida, verifica
+  if (permission && !permissions[permission]) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

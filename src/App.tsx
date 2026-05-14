@@ -1,27 +1,23 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster }              from "@/components/ui/toaster";
+import { Toaster as Sonner }    from "@/components/ui/sonner";
+import { TooltipProvider }      from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import Index from "./pages/Index";
-import Schedules from "./pages/Schedules";
-import Warehouses from "./pages/Warehouses";
-import Map from "./pages/Map";
-import Vehicles from "./pages/Vehicles";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
-import Help from "./pages/Help";
-import Gate from "./pages/Gate";
-import NotFound from "./pages/NotFound";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Patios from "./pages/Patios";
-import Zones from "./pages/Zones";
-import Pallets from "./pages/Pallets";
-import Home from "./pages/Home";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider }         from "@/context/AuthContext";
+import { ProtectedRoute }       from "@/components/ProtectedRoute";
 
+import Index      from "./pages/Index";
+import Schedules  from "./pages/Schedules";
+import Pallets    from "./pages/Pallets";
+import Patios     from "./pages/Patios";
+import Zones      from "./pages/Zones";
+import Users      from "./pages/Users";
+import Gate       from "./pages/Gate";
+import Settings   from "./pages/Settings";
+import Help       from "./pages/Help";
+import NotFound   from "./pages/NotFound";
+import Login      from "./pages/Login";
+import Register   from "./pages/Register";
 
 const queryClient = new QueryClient();
 
@@ -33,24 +29,37 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Rotas públicas */}
+            {/* Públicas */}
             <Route path="/login"    element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* Rotas protegidas */}
-            <Route path="/"          element={<ProtectedRoute><Index /></ProtectedRoute>} />
-            <Route path="/home"          element={<ProtectedRoute><Home /></ProtectedRoute>} />
-            <Route path="/gate"      element={<ProtectedRoute><Gate /></ProtectedRoute>} />
-            <Route path="/schedules" element={<ProtectedRoute><Schedules /></ProtectedRoute>} />
-            {/*<Route path="/inventory" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />*/}
-            {/*<Route path="/map"       element={<ProtectedRoute><Map /></ProtectedRoute>} />*/}
-            {/*<Route path="/vehicles"  element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />*/}
-            {/*<Route path="/reports"   element={<ProtectedRoute><Reports /></ProtectedRoute>} />*/}
-            <Route path="/settings"  element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-            <Route path="/help"      element={<ProtectedRoute><Help /></ProtectedRoute>} />
-            <Route path="/patios"  element={<ProtectedRoute><Patios /></ProtectedRoute>} />
-            <Route path="/zones"      element={<ProtectedRoute><Zones /></ProtectedRoute>} />
-            <Route path="/pallets" element={<ProtectedRoute><Pallets /></ProtectedRoute>} />
+            {/* Autenticadas — sem restrição de tipo */}
+            <Route path="/"        element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/help"     element={<ProtectedRoute><Help /></ProtectedRoute>} />
+
+            {/* Portaria — admin e portaria */}
+            <Route path="/gate"
+              element={<ProtectedRoute permission="podeVerAgendamentos"><Gate /></ProtectedRoute>} />
+
+            {/* Agendamentos — todos exceto sem perfil */}
+            <Route path="/schedules"
+              element={<ProtectedRoute permission="podeVerAgendamentos"><Schedules /></ProtectedRoute>} />
+
+            {/* Pallets — admin, portaria, recebimento */}
+            <Route path="/pallets"
+              element={<ProtectedRoute permission="podeVerPallets"><Pallets /></ProtectedRoute>} />
+
+            {/* Pátios e Zonas — admin */}
+            <Route path="/patios"
+              element={<ProtectedRoute permission="podeGerenciarPatios"><Patios /></ProtectedRoute>} />
+            <Route path="/zones"
+              element={<ProtectedRoute permission="podeGerenciarPatios"><Zones /></ProtectedRoute>} />
+
+            {/* Usuários — admin */}
+            <Route path="/users"
+              element={<ProtectedRoute permission="podeGerenciarUsuarios"><Users /></ProtectedRoute>} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
