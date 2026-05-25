@@ -1,280 +1,229 @@
-import { useState } from "react";
-import {
-  Settings as SettingsIcon,
-  User,
-  Bell,
-  Shield,
-  Palette,
-  Database,
-  Save,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Header } from "@/components/Header";
+import { useState, useEffect } from "react";
+import { Settings as SettingsIcon, Clock, Save, Info, RefreshCw } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
-import { toast } from "sonner";
+import { Header }  from "@/components/Header";
+import { Button }  from "@/components/ui/button";
+import { Input }   from "@/components/ui/input";
+import { Label }   from "@/components/ui/label";
+import { toast }   from "@/hooks/use-toast";
+import { cn }      from "@/lib/utils";
+import { usePermissions }    from "@/context/usePermissions";
+import { fetchConfiguracao, updateConfiguracao, ConfiguracaoAPI } from "@/services/configService";
 
-const Settings = () => {
-  const [settings, setSettings] = useState({
-    companyName: "Protótipo Logística",
-    email: "admin@prototipo.com",
-    phone: "(11) 99999-9999",
-    notifySchedules: true,
-    notifyAlerts: true,
-    notifyReports: false,
-    emailNotifications: true,
-    theme: "system",
-    language: "pt-BR",
-    autoRefresh: true,
-    refreshInterval: "30",
-  });
+export default function Settings() {
+  const permissions = usePermissions();
 
-  const handleSave = () => {
-    toast.success("Configurações salvas com sucesso!");
+  const [config,   setConfig]   = useState<ConfiguracaoAPI | null>(null);
+  const [loading,  setLoading]  = useState(false);
+  const [saving,   setSaving]   = useState(false);
+  const [dias,     setDias]     = useState("0");
+  const [horas,    setHoras]    = useState("24");
+
+  useEffect(() => {
+    setLoading(true);
+    fetchConfiguracao()
+      .then((c) => {
+        setConfig(c);
+        setDias(String(c.janela_dias));
+        setHoras(String(c.janela_horas));
+      })
+      .catch(() => toast({ title: "Erro ao carregar configurações.", variant: "destructive" }))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSave = async () => {
+    const d = parseInt(dias)  || 0;
+    const h = parseInt(horas) || 0;
+
+    if (d === 0 && h === 0) {
+      toast({ title: "A janela de tempo não pode ser zero.", variant: "destructive" });
+      return;
+    }
+    if (h > 23) {
+      toast({ title: "Horas deve ser entre 0 e 23.", variant: "destructive" });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const updated = await updateConfiguracao({ janela_dias: d, janela_horas: h });
+      setConfig(updated);
+      toast({ title: "Configurações salvas!", description: `Janela: ${updated.janela_dias}d ${updated.janela_horas}h (${updated.janela_total_horas}h total)` });
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
+  const totalHoras = (parseInt(dias) || 0) * 24 + (parseInt(horas) || 0);
+  const hasChanges = config
+    ? parseInt(dias) !== config.janela_dias || parseInt(horas) !== config.janela_horas
+    : false;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <div className="lg:pl-20">
+      <div className="flex-1 lg:ml-64">
         <Header />
-        
-        <main className="p-6">
-          {/* Page Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <SettingsIcon className="h-6 w-6" />
-              Configurações
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Gerencie as configurações do sistema
-            </p>
+        <main className="p-6 space-y-6 max-w-2xl">
+
+          {/* Cabeçalho */}
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Configurações</h1>
+            <p className="text-sm text-muted-foreground mt-1">Parâmetros do sistema</p>
           </div>
 
-          <Tabs defaultValue="general" className="space-y-6">
-            <TabsList>
-              <TabsTrigger value="general" className="gap-2">
-                <User className="h-4 w-4" />
-                Geral
-              </TabsTrigger>
-              <TabsTrigger value="notifications" className="gap-2">
-                <Bell className="h-4 w-4" />
-                Notificações
-              </TabsTrigger>
-              <TabsTrigger value="appearance" className="gap-2">
-                <Palette className="h-4 w-4" />
-                Aparência
-              </TabsTrigger>
-              <TabsTrigger value="system" className="gap-2">
-                <Database className="h-4 w-4" />
-                Sistema
-              </TabsTrigger>
-            </TabsList>
+          {/* Card de configuração de janela */}
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            {/* Header do card */}
+            <div className="flex items-center gap-3 border-b border-border px-5 py-4">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                <Clock className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-foreground">Janela de Capacidade</p>
+                <p className="text-xs text-muted-foreground">
+                  Período considerado para verificar a capacidade das zonas no agendamento
+                </p>
+              </div>
+            </div>
 
-            <TabsContent value="general">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Informações Gerais</CardTitle>
-                  <CardDescription>Dados básicos da empresa e contato</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="companyName">Nome da Empresa</Label>
-                    <Input
-                      id="companyName"
-                      value={settings.companyName}
-                      onChange={(e) => setSettings({ ...settings, companyName: e.target.value })}
-                    />
+            <div className="p-5 space-y-5">
+              {loading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Carregando...
+                </div>
+              ) : (
+                <>
+                  {/* Explicação da regra */}
+                  <div className="flex gap-3 rounded-lg border border-blue-500/20 bg-blue-500/5 p-4 text-sm">
+                    <Info className="h-4 w-4 shrink-0 text-blue-500 mt-0.5" />
+                    <div className="text-muted-foreground space-y-1">
+                      <p>Ao criar um agendamento para a zona <strong className="text-foreground">X</strong> no horário <strong className="text-foreground">H</strong>, o sistema soma:</p>
+                      <ul className="list-disc list-inside space-y-0.5 ml-1">
+                        <li>Pallets de agendamentos ativos em <strong className="text-foreground">[H − janela, H + janela]</strong></li>
+                        <li>Pallets de agendamentos concluídos em <strong className="text-foreground">[H − janela, H]</strong></li>
+                        <li>Pallets da solicitação corrente</li>
+                      </ul>
+                      <p className="pt-1">O total deve ser <strong className="text-foreground">≤ capacidade da zona</strong>. Agendamentos cancelados são ignorados.</p>
+                    </div>
                   </div>
-                  <div className="grid gap-4 sm:grid-cols-2">
+
+                  {/* Campos de configuração */}
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="email">E-mail</Label>
+                      <Label htmlFor="janela_dias" className="flex items-center gap-2">
+                        Dias
+                      </Label>
                       <Input
-                        id="email"
-                        type="email"
-                        value={settings.email}
-                        onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                        id="janela_dias"
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={dias}
+                        onChange={(e) => setDias(e.target.value)}
+                        disabled={!permissions.isAdmin}
                       />
+                      <p className="text-xs text-muted-foreground">Dias antes e depois</p>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">Telefone</Label>
+                      <Label htmlFor="janela_horas" className="flex items-center gap-2">
+                        Horas
+                      </Label>
                       <Input
-                        id="phone"
-                        value={settings.phone}
-                        onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                        id="janela_horas"
+                        type="number"
+                        min="0"
+                        max="23"
+                        placeholder="24"
+                        value={horas}
+                        onChange={(e) => setHoras(e.target.value)}
+                        disabled={!permissions.isAdmin}
                       />
+                      <p className="text-xs text-muted-foreground">0 a 23 horas adicionais</p>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
-            <TabsContent value="notifications">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Preferências de Notificações</CardTitle>
-                  <CardDescription>Configure quais notificações deseja receber</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Agendamentos</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receber notificações sobre novos agendamentos
-                      </p>
+                  {/* Preview da janela total */}
+                  <div className={cn(
+                    "flex items-center justify-between rounded-lg border px-4 py-3 text-sm transition-colors",
+                    hasChanges
+                      ? "border-primary/30 bg-primary/5"
+                      : "border-border bg-muted/30"
+                  )}>
+                    <span className="text-muted-foreground">Janela total resultante</span>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-foreground text-lg">{totalHoras}h</span>
+                      {hasChanges && (
+                        <span className="text-xs text-muted-foreground">
+                          (atual: {config?.janela_total_horas}h)
+                        </span>
+                      )}
                     </div>
-                    <Switch
-                      checked={settings.notifySchedules}
-                      onCheckedChange={(checked) => setSettings({ ...settings, notifySchedules: checked })}
-                    />
                   </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Alertas de Capacidade</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receber alertas quando zonas atingirem capacidade crítica
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.notifyAlerts}
-                      onCheckedChange={(checked) => setSettings({ ...settings, notifyAlerts: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Relatórios Automáticos</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receber relatórios semanais por e-mail
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.notifyReports}
-                      onCheckedChange={(checked) => setSettings({ ...settings, notifyReports: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Notificações por E-mail</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Enviar cópia das notificações para o e-mail cadastrado
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.emailNotifications}
-                      onCheckedChange={(checked) => setSettings({ ...settings, emailNotifications: checked })}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
 
-            <TabsContent value="appearance">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Aparência</CardTitle>
-                  <CardDescription>Personalize a aparência do sistema</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="theme">Tema</Label>
-                    <Select
-                      value={settings.theme}
-                      onValueChange={(value) => setSettings({ ...settings, theme: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="light">Claro</SelectItem>
-                        <SelectItem value="dark">Escuro</SelectItem>
-                        <SelectItem value="system">Sistema</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="language">Idioma</Label>
-                    <Select
-                      value={settings.language}
-                      onValueChange={(value) => setSettings({ ...settings, language: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                        <SelectItem value="en-US">English (US)</SelectItem>
-                        <SelectItem value="es-ES">Español</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="system">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Configurações do Sistema</CardTitle>
-                  <CardDescription>Configurações técnicas e de performance</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label>Atualização Automática</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Atualizar dados automaticamente em tempo real
-                      </p>
-                    </div>
-                    <Switch
-                      checked={settings.autoRefresh}
-                      onCheckedChange={(checked) => setSettings({ ...settings, autoRefresh: checked })}
-                    />
-                  </div>
-                  {settings.autoRefresh && (
-                    <div className="space-y-2">
-                      <Label htmlFor="refreshInterval">Intervalo de Atualização</Label>
-                      <Select
-                        value={settings.refreshInterval}
-                        onValueChange={(value) => setSettings({ ...settings, refreshInterval: value })}
+                  {/* Exemplos de janela */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { label: "12 horas",  dias: 0, horas: 12 },
+                      { label: "24 horas",  dias: 0, horas: 24 },
+                      { label: "2 dias",    dias: 2, horas: 0  },
+                    ].map((p) => (
+                      <button
+                        key={p.label}
+                        disabled={!permissions.isAdmin}
+                        onClick={() => { setDias(String(p.dias)); setHoras(String(p.horas)); }}
+                        className={cn(
+                          "rounded-lg border px-3 py-2 text-xs font-medium transition-colors",
+                          parseInt(dias) === p.dias && parseInt(horas) === p.horas
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                          !permissions.isAdmin && "cursor-not-allowed opacity-50"
+                        )}
                       >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="10">10 segundos</SelectItem>
-                          <SelectItem value="30">30 segundos</SelectItem>
-                          <SelectItem value="60">1 minuto</SelectItem>
-                          <SelectItem value="300">5 minutos</SelectItem>
-                        </SelectContent>
-                      </Select>
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Botão salvar — só admin */}
+                  {permissions.isAdmin && (
+                    <div className="flex justify-end pt-1">
+                      <Button
+                        onClick={handleSave}
+                        disabled={saving || !hasChanges}
+                        className="gap-2"
+                      >
+                        <Save className="h-4 w-4" />
+                        {saving ? "Salvando..." : "Salvar Configurações"}
+                      </Button>
                     </div>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
 
-          <div className="mt-6 flex justify-end">
-            <Button onClick={handleSave} className="gap-2">
-              <Save className="h-4 w-4" />
-              Salvar Configurações
-            </Button>
+                  {!permissions.isAdmin && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">
+                      Apenas administradores podem alterar as configurações.
+                    </p>
+                  )}
+
+                  {/* Última atualização */}
+                  {config?.updated_at && (
+                    <p className="text-xs text-muted-foreground text-right">
+                      Última alteração:{" "}
+                      {new Date(config.updated_at).toLocaleString("pt-BR", {
+                        day: "2-digit", month: "2-digit", year: "numeric",
+                        hour: "2-digit", minute: "2-digit",
+                      })}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </main>
       </div>
     </div>
   );
-};
-
-export default Settings;
+}
