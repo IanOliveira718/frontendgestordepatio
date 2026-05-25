@@ -4,25 +4,22 @@ type TipoUsuario = "administrador" | "portaria" | "recebimento" | "fornecedor";
 
 interface Permissions {
   // Agendamentos
-  podeVerAgendamentos:        boolean;
-  podeCriarAgendamento:       boolean;
-  podeAlterarStatusAgendamento: boolean;
-  podeEditarAgendamento:      boolean;  // editar dados (placa, motorista, etc.)
-  podeCancelarAgendamento:    boolean;
+  podeVerAgendamentos:           boolean;
+  podeCriarAgendamento:          boolean;
+  podeAlterarStatusAgendamento:  boolean;
+  podeEditarAgendamento:         boolean;
+  podeCancelarAgendamento:       boolean;
 
   // Pallets
-  podeVerPallets:             boolean;
-  podeAlterarStatusPallet:    boolean;
+  podeVerPallets:                boolean;
+  podeAlterarStatusPallet:       boolean;
 
-  // Usuários
-  podeGerenciarUsuarios:      boolean;
+  // Usuários e Pátios
+  podeGerenciarUsuarios:         boolean;
+  podeGerenciarPatios:           boolean;
 
-  // Pátios e Zonas
-  podeGerenciarPatios:        boolean;
-
-  // Tipo atual
-  tipo:                       TipoUsuario | null;
-  isAdmin:                    boolean;
+  tipo:    TipoUsuario | null;
+  isAdmin: boolean;
 }
 
 export function usePermissions(): Permissions {
@@ -37,18 +34,19 @@ export function usePermissions(): Permissions {
     podeCriarAgendamento:          is("administrador", "fornecedor"),
     podeAlterarStatusAgendamento:  is("administrador", "portaria", "recebimento"),
     podeEditarAgendamento:         is("administrador"),
-    podeCancelarAgendamento:       is("administrador"),
+    // Fornecedor agora pode cancelar (os próprios — validado no back)
+    podeCancelarAgendamento:       is("administrador", "fornecedor"),
 
     // Pallets
-    podeVerPallets:                is("administrador", "portaria", "recebimento"),
+    // Fornecedor agora pode ver pallets (dos próprios agendamentos — filtrado no back)
+    podeVerPallets:                is("administrador", "portaria", "recebimento", "fornecedor"),
     podeAlterarStatusPallet:       is("administrador", "recebimento"),
 
-    // Usuários e Pátios — só admin
+    // Admin only
     podeGerenciarUsuarios:         is("administrador"),
     podeGerenciarPatios:           is("administrador"),
 
-    // Utilitários
     tipo,
-    isAdmin:                       is("administrador"),
+    isAdmin: is("administrador"),
   };
 }

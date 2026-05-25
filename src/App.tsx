@@ -18,6 +18,7 @@ import Help       from "./pages/Help";
 import NotFound   from "./pages/NotFound";
 import Login      from "./pages/Login";
 import Register   from "./pages/Register";
+import MySchedules from "./pages/MySchedules";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,8 @@ const App = () => (
             <Route path="/users"
               element={<ProtectedRoute permission="podeGerenciarUsuarios"><Users /></ProtectedRoute>} />
 
+            <Route path="/my-schedules"
+  element={<ProtectedRoute permission="podeVerAgendamentos"><MySchedules /></ProtectedRoute>} />  
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

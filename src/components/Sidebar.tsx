@@ -17,6 +17,7 @@ import {
   Building2,
   ChevronLeft,
   LogOut,
+  CalendarDays,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -215,6 +216,12 @@ export function Sidebar() {
             to: "/pallets",
             icon: Package,
             show: permissions.podeVerPallets,
+          },
+          {
+            label: "Meus Agendamentos",
+            to: "/my-schedules",
+            icon: CalendarDays,
+            show: permissions.podeVerAgendamentos,
           },
         ],
       },
