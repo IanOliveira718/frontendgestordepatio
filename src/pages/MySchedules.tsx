@@ -19,7 +19,7 @@ import { toast }  from "@/hooks/use-toast";
 import { cn }     from "@/lib/utils";
 import {
   AgendamentoAPI,
-  fetchAgendamentosByPeriod,
+  fetchMeusAgendamentos,
   fetchAgendamentoById,
 } from "@/services/agendamentosService";
 
@@ -296,7 +296,7 @@ export default function MySchedules() {
     try {
       const end   = format(new Date(), "yyyy-MM-dd");
       const start = format(subMonths(new Date(), 3), "yyyy-MM-dd");
-      const data  = await fetchAgendamentosByPeriod(start, end);
+      const data  = await fetchMeusAgendamentos(start, end);
       // Ordena do mais recente para o mais antigo
       setAgendamentos(
         data.sort((a, b) => {

@@ -72,6 +72,18 @@ export async function fetchAgendamentosByPeriod(
   return res.json();
 }
 
+export async function fetchMeusAgendamentos(
+  startDate: string,
+  endDate: string
+): Promise<AgendamentoAPI[]> {
+  const res = await fetch(
+    `${BASE_URL}/meus/?start_date=${startDate}&end_date=${endDate}`,
+    { headers: authHeaders() }
+  );
+  if (!res.ok) throw new Error("Erro ao buscar agendamentos.");
+  return res.json();
+}
+
 export async function createAgendamento(payload: AgendamentoPayload): Promise<AgendamentoAPI> {
   const res = await fetch(`${BASE_URL}/`, {
     method:  "POST",
