@@ -1,6 +1,6 @@
 import { authHeaders } from "./authService";
 
-const BASE_URL = "http://localhost:8000/api/config";
+const BASE_URL =  import.meta.env.VITE_API_URL+"/api/config";
 
 export interface ConfiguracaoAPI {
   janela_dias:        number;

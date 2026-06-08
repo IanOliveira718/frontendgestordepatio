@@ -19,6 +19,8 @@ import NotFound   from "./pages/NotFound";
 import Login      from "./pages/Login";
 import Register   from "./pages/Register";
 import MySchedules from "./pages/MySchedules";
+import Fornecedores from "./pages/Fornecedores";
+import FornecedoreNew from "./pages/FornecedorNew";
 
 const queryClient = new QueryClient();
 
@@ -60,9 +62,13 @@ const App = () => (
             {/* Usuários — admin */}
             <Route path="/users"
               element={<ProtectedRoute permission="podeGerenciarUsuarios"><Users /></ProtectedRoute>} />
+            <Route path="/fornecedores"
+              element={<ProtectedRoute permission="podeGerenciarUsuarios"><Fornecedores /></ProtectedRoute>} />
+            <Route path="/novo-fornecedor"
+              element={<ProtectedRoute permission="podeGerenciarUsuarios"><FornecedoreNew /></ProtectedRoute>} />
 
             <Route path="/my-schedules"
-  element={<ProtectedRoute permission="podeVerAgendamentos"><MySchedules /></ProtectedRoute>} />  
+  element={<ProtectedRoute permission="podeVerAgendamentos"><MySchedules /></ProtectedRoute>} /> 
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
