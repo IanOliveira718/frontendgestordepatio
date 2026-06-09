@@ -1,78 +1,183 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Truck, Eye, EyeOff, UserPlus } from "lucide-react";
+import {
+  Truck, Eye, EyeOff, UserPlus,
+  Building2, Search, CheckCircle2, AlertCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
-import { register } from "@/services/authService";
-import { useAuth } from "@/context/AuthContext";
+import { Input }  from "@/components/ui/input";
+import { Label }  from "@/components/ui/label";
+import { toast }  from "@/hooks/use-toast";
+import { cn }     from "@/lib/utils";
+
+const BASE = "http://localhost:8000/api";
+
+// ── Máscara de CNPJ ───────────────────────────────────────────────────────────
+function maskCNPJ(v: string): string {
+  const d = v.replace(/\D/g, "").slice(0, 14);
+  return d
+    .replace(/^(\d{2})(\d)/,            "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/,   "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/,           ".$1/$2")
+    .replace(/(\d{4})(\d)/,             "$1-$2");
+}
+
+interface FornecedorInfo {
+  id:            number;
+  nome_fantasia: string;
+  cnpj_formatado: string;
+}
 
 export default function Register() {
-  const navigate    = useNavigate();
-  const { setUser } = useAuth();
-  const [loading, setLoading]   = useState(false);
+  const navigate = useNavigate();
+
+  // Estado do CNPJ e busca
+  const [cnpj,          setCnpj]          = useState("");
+  const [cnpjStatus,    setCnpjStatus]    = useState<"idle" | "checking" | "found" | "error">("idle");
+  const [cnpjErro,      setCnpjErro]      = useState("");
+  const [fornecedor,    setFornecedor]    = useState<FornecedorInfo | null>(null);
+
+  // Estado do formulário
   const [showPass, setShowPass] = useState(false);
+  const [saving,   setSaving]   = useState(false);
   const [formData, setFormData] = useState({
-    first_name: "",
-    last_name:  "",
-    email:      "",
-    username:   "",
-    password:   "",
-    password2:  "",
+    first_name: "", last_name: "",
+    email: "", username: "",
+    password: "", password2: "",
   });
 
-  const set = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.password !== formData.password2) {
-      toast({ title: "Senhas não coincidem", variant: "destructive" });
+  // ── Verificar CNPJ ──────────────────────────────────────────────────────────
+  const handleVerificarCNPJ = async () => {
+    const digits = cnpj.replace(/\D/g, "");
+    if (digits.length !== 14) {
+      setCnpjErro("Digite um CNPJ válido com 14 dígitos.");
+      setCnpjStatus("error");
       return;
     }
-    setLoading(true);
+
+    setCnpjStatus("checking");
+    setCnpjErro("");
+    setFornecedor(null);
+
     try {
-      const data = await register(formData);
-      setUser(data.user);
-      toast({ title: "Conta criada!", description: `Bem-vindo, ${data.user.first_name}!` });
-      navigate("/", { replace: true });
-    } catch (err: any) {
-      toast({ title: "Erro ao criar conta", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
+      // Usa o endpoint público de fornecedores com busca pelo CNPJ
+      const res  = await fetch(`${BASE}/fornecedores/?q=${digits}&per_page=1`);
+      const data = await res.json();
+
+      const found = (data.results ?? []).find(
+        (f: any) => f.cnpj.replace(/\D/g, "") === digits
+      );
+
+      if (!found) {
+        setCnpjErro(
+          "O CNPJ informado não possui vínculo com nenhuma empresa cadastrada no sistema. " +
+          "Entre em contato com o administrador."
+        );
+        setCnpjStatus("error");
+        return;
+      }
+
+      setFornecedor(found);
+      setCnpjStatus("found");
+    } catch {
+      setCnpjErro("Erro ao verificar CNPJ. Tente novamente.");
+      setCnpjStatus("error");
     }
   };
 
+  const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCnpj(maskCNPJ(e.target.value));
+    setCnpjStatus("idle");
+    setCnpjErro("");
+    setFornecedor(null);
+  };
+
+  // ── Submeter cadastro ───────────────────────────────────────────────────────
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (cnpjStatus !== "found" || !fornecedor) {
+      toast({ title: "Verifique o CNPJ antes de continuar.", variant: "destructive" });
+      return;
+    }
+    if (formData.password !== formData.password2) {
+      toast({ title: "As senhas não coincidem.", variant: "destructive" });
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const res = await fetch(`${BASE}/auth/register/`, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...formData,
+          cnpj: cnpj.replace(/\D/g, ""),
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Extrai mensagem mais legível dos erros do DRF
+        const msg = typeof data === "object"
+          ? Object.entries(data)
+              .map(([k, v]) => `${k === "non_field_errors" ? "" : k + ": "}${Array.isArray(v) ? v.join(" ") : v}`)
+              .join(" ")
+          : "Erro ao realizar cadastro.";
+        throw new Error(msg.trim());
+      }
+
+      toast({
+        title: "Cadastro realizado!",
+        description: "Aguarde a aprovação do administrador para acessar o sistema.",
+      });
+      navigate("/login");
+    } catch (err: any) {
+      toast({ title: "Erro no cadastro", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const set = (field: keyof typeof formData) =>
+    (e: React.ChangeEvent<HTMLInputElement>) =>
+      setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+
+  const cnpjVerificado = cnpjStatus === "found";
+
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Painel esquerdo — visual */}
+
+      {/* ── Painel esquerdo ────────────────────────────────────────────────── */}
       <div className="hidden lg:flex lg:w-1/2 flex-col items-center justify-center bg-primary p-12 text-primary-foreground">
         <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary-foreground/10">
           <Truck className="h-10 w-10" />
         </div>
         <h1 className="mb-3 text-4xl font-bold">Gestor de Pátio</h1>
         <p className="max-w-sm text-center text-primary-foreground/70 text-lg">
-          Crie sua conta e comece a gerenciar agendamentos com eficiência.
+          Crie sua conta para agendar cargas e acompanhar o status das suas entregas.
         </p>
-
         <ul className="mt-12 space-y-4 w-full max-w-sm">
           {[
-            "Gerencie entradas e saídas em tempo real",
-            "Calendário integrado de agendamentos",
-            "Controle de zonas e pallets",
+            "Agendamento rápido de cargas",
+            "Status dos pallets em tempo real",
+            "Histórico completo de agendamentos",
           ].map((item) => (
             <li key={item} className="flex items-center gap-3 text-sm text-primary-foreground/80">
-              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-foreground/10 text-xs font-bold">✓</span>
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-foreground/10 text-xs font-bold">
+                ✓
+              </span>
               {item}
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Painel direito — formulário */}
+      {/* ── Formulário ─────────────────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col items-center justify-center p-8 overflow-y-auto">
         <div className="w-full max-w-md">
+
           {/* Logo mobile */}
           <div className="mb-8 flex items-center gap-3 lg:hidden">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
@@ -83,98 +188,133 @@ export default function Register() {
 
           <h2 className="text-2xl font-bold text-foreground">Criar conta</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Preencha os dados abaixo para se registrar
+            Preencha os dados para solicitar acesso ao sistema
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="first_name">Nome</Label>
-                <Input
-                  id="first_name"
-                  placeholder="João"
-                  value={formData.first_name}
-                  onChange={set("first_name")}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="last_name">Sobrenome</Label>
-                <Input
-                  id="last_name"
-                  placeholder="Silva"
-                  value={formData.last_name}
-                  onChange={set("last_name")}
-                  required
-                />
-              </div>
-            </div>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
 
+            {/* ── CNPJ da empresa ──────────────────────────────────────────── */}
             <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="joao@empresa.com"
-                value={formData.email}
-                onChange={set("email")}
-                autoComplete="email"
-                required
-              />
-            </div>
+              <Label className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                CNPJ da Empresa <span className="text-destructive">*</span>
+              </Label>
 
-            <div className="space-y-2">
-              <Label htmlFor="username">Usuário</Label>
-              <Input
-                id="username"
-                placeholder="joao.silva"
-                value={formData.username}
-                onChange={set("username")}
-                autoComplete="username"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
-              <div className="relative">
+              <div className="flex gap-2">
                 <Input
-                  id="password"
-                  type={showPass ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={set("password")}
-                  autoComplete="new-password"
-                  className="pr-10"
-                  required
+                  placeholder="00.000.000/0000-00"
+                  value={cnpj}
+                  onChange={handleCnpjChange}
+                  className={cn(
+                    "font-mono",
+                    cnpjStatus === "error" && "border-destructive focus-visible:ring-destructive",
+                    cnpjStatus === "found" && "border-green-500 focus-visible:ring-green-500"
+                  )}
+                  maxLength={18}
                 />
-                <button
+                <Button
                   type="button"
-                  onClick={() => setShowPass(!showPass)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  variant="outline"
+                  onClick={handleVerificarCNPJ}
+                  disabled={cnpjStatus === "checking"}
+                  className="shrink-0 gap-2"
                 >
-                  {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+                  <Search className="h-4 w-4" />
+                  {cnpjStatus === "checking" ? "Verificando..." : "Verificar"}
+                </Button>
               </div>
+
+              {/* Feedback CNPJ */}
+              {cnpjStatus === "error" && (
+                <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span>{cnpjErro}</span>
+                </div>
+              )}
+              {cnpjStatus === "found" && fornecedor && (
+                <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2.5">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">{fornecedor.nome_fantasia}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{fornecedor.cnpj_formatado}</p>
+                  </div>
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password2">Confirmar senha</Label>
-              <Input
-                id="password2"
-                type={showPass ? "text" : "password"}
-                placeholder="••••••••"
-                value={formData.password2}
-                onChange={set("password2")}
-                autoComplete="new-password"
-                required
-              />
-            </div>
+            {/* ── Dados pessoais — só aparece após CNPJ verificado ─────────── */}
+            {cnpjVerificado && (
+              <>
+                <div className="pt-1 border-t border-border">
+                  <p className="text-sm font-medium text-foreground pt-3 mb-4">Dados pessoais</p>
 
-            <Button type="submit" className="w-full gap-2 mt-2" disabled={loading}>
-              <UserPlus className="h-4 w-4" />
-              {loading ? "Criando conta..." : "Criar conta"}
-            </Button>
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="first_name">Nome</Label>
+                        <Input id="first_name" placeholder="João"
+                          value={formData.first_name} onChange={set("first_name")} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="last_name">Sobrenome</Label>
+                        <Input id="last_name" placeholder="Silva"
+                          value={formData.last_name} onChange={set("last_name")} />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">E-mail</Label>
+                      <Input id="email" type="email" placeholder="joao@empresa.com"
+                        value={formData.email} onChange={set("email")}
+                        autoComplete="email" required />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="username">Usuário</Label>
+                      <Input id="username" placeholder="joao.silva"
+                        value={formData.username} onChange={set("username")}
+                        autoComplete="username" required />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="password">Senha</Label>
+                      <div className="relative">
+                        <Input id="password" type={showPass ? "text" : "password"}
+                          placeholder="••••••••"
+                          value={formData.password} onChange={set("password")}
+                          autoComplete="new-password" className="pr-10" required />
+                        <button type="button" onClick={() => setShowPass(!showPass)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                          {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="password2">Confirmar senha</Label>
+                      <Input id="password2" type={showPass ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={formData.password2} onChange={set("password2")}
+                        autoComplete="new-password" required />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Aviso de aprovação */}
+                <div className="flex items-start gap-2.5 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-3 text-xs text-amber-700">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span>
+                    Após o cadastro, seu acesso ficará <strong>bloqueado</strong> até que o
+                    administrador aprove sua solicitação.
+                  </span>
+                </div>
+
+                <Button type="submit" className="w-full gap-2" disabled={saving}>
+                  <UserPlus className="h-4 w-4" />
+                  {saving ? "Enviando..." : "Solicitar Cadastro"}
+                </Button>
+              </>
+            )}
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
