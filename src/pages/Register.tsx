@@ -15,6 +15,7 @@ const BASE = "http://localhost:8000/api";
 // ── Máscara de CNPJ ───────────────────────────────────────────────────────────
 function maskCNPJ(v: string): string {
   const d = v.replace(/\D/g, "").slice(0, 14);
+  console.log(d);
   return d
     .replace(/^(\d{2})(\d)/,            "$1.$2")
     .replace(/^(\d{2})\.(\d{3})(\d)/,   "$1.$2.$3")
@@ -43,47 +44,9 @@ export default function Register() {
   const [formData, setFormData] = useState({
     first_name: "", last_name: "",
     email: "", username: "",
-    password: "", password2: "",
+    password: "", password2: "", 
+    cnpj: ""
   });
-
-  // ── Verificar CNPJ ──────────────────────────────────────────────────────────
-  const handleVerificarCNPJ = async () => {
-    const digits = cnpj.replace(/\D/g, "");
-    if (digits.length !== 14) {
-      setCnpjErro("Digite um CNPJ válido com 14 dígitos.");
-      setCnpjStatus("error");
-      return;
-    }
-
-    setCnpjStatus("checking");
-    setCnpjErro("");
-    setFornecedor(null);
-
-    try {
-      // Usa o endpoint público de fornecedores com busca pelo CNPJ
-      const res  = await fetch(`${BASE}/fornecedores/?q=${digits}&per_page=1`);
-      const data = await res.json();
-
-      const found = (data.results ?? []).find(
-        (f: any) => f.cnpj.replace(/\D/g, "") === digits
-      );
-
-      if (!found) {
-        setCnpjErro(
-          "O CNPJ informado não possui vínculo com nenhuma empresa cadastrada no sistema. " +
-          "Entre em contato com o administrador."
-        );
-        setCnpjStatus("error");
-        return;
-      }
-
-      setFornecedor(found);
-      setCnpjStatus("found");
-    } catch {
-      setCnpjErro("Erro ao verificar CNPJ. Tente novamente.");
-      setCnpjStatus("error");
-    }
-  };
 
   const handleCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCnpj(maskCNPJ(e.target.value));
@@ -95,11 +58,11 @@ export default function Register() {
   // ── Submeter cadastro ───────────────────────────────────────────────────────
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    /*
     if (cnpjStatus !== "found" || !fornecedor) {
       toast({ title: "Verifique o CNPJ antes de continuar.", variant: "destructive" });
       return;
-    }
+    }*/
     if (formData.password !== formData.password2) {
       toast({ title: "As senhas não coincidem.", variant: "destructive" });
       return;
@@ -192,59 +155,7 @@ export default function Register() {
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-
-            {/* ── CNPJ da empresa ──────────────────────────────────────────── */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-                CNPJ da Empresa <span className="text-destructive">*</span>
-              </Label>
-
-              <div className="flex gap-2">
-                <Input
-                  placeholder="00.000.000/0000-00"
-                  value={cnpj}
-                  onChange={handleCnpjChange}
-                  className={cn(
-                    "font-mono",
-                    cnpjStatus === "error" && "border-destructive focus-visible:ring-destructive",
-                    cnpjStatus === "found" && "border-green-500 focus-visible:ring-green-500"
-                  )}
-                  maxLength={18}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleVerificarCNPJ}
-                  disabled={cnpjStatus === "checking"}
-                  className="shrink-0 gap-2"
-                >
-                  <Search className="h-4 w-4" />
-                  {cnpjStatus === "checking" ? "Verificando..." : "Verificar"}
-                </Button>
-              </div>
-
-              {/* Feedback CNPJ */}
-              {cnpjStatus === "error" && (
-                <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
-                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-                  <span>{cnpjErro}</span>
-                </div>
-              )}
-              {cnpjStatus === "found" && fornecedor && (
-                <div className="flex items-center gap-3 rounded-lg border border-green-500/30 bg-green-500/10 px-3 py-2.5">
-                  <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600" />
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{fornecedor.nome_fantasia}</p>
-                    <p className="text-xs text-muted-foreground font-mono">{fornecedor.cnpj_formatado}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* ── Dados pessoais — só aparece após CNPJ verificado ─────────── */}
-            {cnpjVerificado && (
-              <>
+            <>
                 <div className="pt-1 border-t border-border">
                   <p className="text-sm font-medium text-foreground pt-3 mb-4">Dados pessoais</p>
 
@@ -267,6 +178,14 @@ export default function Register() {
                       <Input id="email" type="email" placeholder="joao@empresa.com"
                         value={formData.email} onChange={set("email")}
                         autoComplete="email" required />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="cnpj">CNPJ</Label>
+                      <Input id="cnpj" type="text" placeholder="00.000.000/0000-00" 
+                        maxLength={18} value={cnpj} onChange={handleCnpjChange} 
+                        autoComplete="off" required
+                      />
                     </div>
 
                     <div className="space-y-2">
@@ -314,7 +233,6 @@ export default function Register() {
                   {saving ? "Enviando..." : "Solicitar Cadastro"}
                 </Button>
               </>
-            )}
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
