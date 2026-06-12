@@ -290,32 +290,78 @@ export function NewScheduleDialog({ children, onCreated }: NewScheduleDialogProp
           )}
 
           {/* Data + Hora + Pallets */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="date">Data</Label>
-              <Input id="date" type="date" value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="time">Horário</Label>
-              <Input id="time" type="time" value={formData.time}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="pallets" className="flex items-center gap-2">
-                <Package className="h-4 w-4 text-muted-foreground" />Pallets
-              </Label>
-              <Input
-                id="pallets"
-                type="number"
-                min="1"
-                placeholder="0"
-                value={formData.pallets}
-                onChange={(e) => setFormData({ ...formData, pallets: e.target.value })}
-                required
-              />
-            </div>
-          </div>
+          {/* Data + Hora + Pallets */}
+<div className="grid grid-cols-3 gap-4">
+  <div className="space-y-2">
+    <Label htmlFor="date">Data</Label>
+    <Input
+      id="date"
+      type="date"
+      value={formData.date}
+      onChange={(e) =>
+        setFormData({ ...formData, date: e.target.value })
+      }
+      required
+    />
+  </div>
+
+  <div className="space-y-2">
+    <Label>Horário</Label>
+
+    <Select
+      value={formData.time}
+      onValueChange={(v) =>
+        setFormData({ ...formData, time: v })
+      }
+      required
+    >
+      <SelectTrigger>
+        <SelectValue placeholder="00:00" />
+      </SelectTrigger>
+
+      <SelectContent>
+        {[
+          "08:00",
+          "09:00",
+          "10:00",
+          "11:00",
+          "12:00",
+          "13:00",
+          "14:00",
+          "15:00",
+          "16:00",
+          "17:00",
+        ].map((hora) => (
+          <SelectItem key={hora} value={hora}>
+            {hora}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+
+  <div className="space-y-2">
+    <Label
+      htmlFor="pallets"
+      className="flex items-center gap-2"
+    >
+      <Package className="h-4 w-4 text-muted-foreground" />
+      Pallets
+    </Label>
+
+    <Input
+      id="pallets"
+      type="number"
+      min="1"
+      placeholder="0"
+      value={formData.pallets}
+      onChange={(e) =>
+        setFormData({ ...formData, pallets: e.target.value })
+      }
+      required
+    />
+  </div>
+</div>
 
           {/* Nota Fiscal */}
           <div className="space-y-2">
