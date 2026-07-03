@@ -5,8 +5,8 @@ import { Sidebar }         from "@/components/Sidebar";
 import { Header }          from "@/components/Header";
 import { Button }          from "@/components/ui/button";
 import { toast }           from "@/hooks/use-toast";
-import { FornecedorForm }  from "@/components/Fornecedorform";
-import { createFornecedor, FornecedorPayload } from "@/services/FornecedorService";
+import { FornecedorForm }  from "@/components/FornecedorForm";
+import { createFornecedor, FornecedorPayload } from "@/services/fornecedorService";
 
 export default function FornecedorNovo() {
   const navigate = useNavigate();

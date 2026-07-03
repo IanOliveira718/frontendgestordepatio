@@ -30,7 +30,7 @@ import { FornecedorBadge }    from "@/components/FornecedorBadge";
 import {
   FornecedorAPI, PaginatedFornecedores,
   fetchFornecedores, toggleFornecedorStatus, deleteFornecedor,
-} from "@/services/FornecedorService";
+} from "@/services/fornecedorService";
 
 export default function Fornecedores() {
   const navigate = useNavigate();
