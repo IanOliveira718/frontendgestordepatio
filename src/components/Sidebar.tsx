@@ -18,6 +18,8 @@ import {
   ChevronLeft,
   LogOut,
   CalendarDays,
+  HomeIcon,
+  StoreIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -200,9 +202,9 @@ export function Sidebar() {
         title: "GERAL",
         items: [
           {
-            label: "Dashboard",
+            label: "Principal",
             to: "/",
-            icon: LayoutDashboard,
+            icon: HomeIcon,
             show: true,
           },
           {
@@ -247,12 +249,6 @@ export function Sidebar() {
             icon: Layers,
             show: permissions.podeGerenciarPatios,
           },
-          {
-            label: "Movimentações",
-            to: "/movements",
-            icon: Truck,
-            show: permissions.podeVerPallets,
-          },
         ],
       },
       {
@@ -263,6 +259,12 @@ export function Sidebar() {
             to: "/users",
             icon: Users,
             show: permissions.podeGerenciarUsuarios,
+          },
+          {
+            label: "Fornecedores",
+            to: "/fornecedores",
+            icon: StoreIcon,
+            show: permissions.isAdmin,
           },
           {
             label: "Relatórios",
