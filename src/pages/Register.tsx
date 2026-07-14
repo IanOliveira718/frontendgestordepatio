@@ -10,7 +10,8 @@ import { Label }  from "@/components/ui/label";
 import { toast }  from "@/hooks/use-toast";
 import { cn }     from "@/lib/utils";
 
-const BASE = "http://localhost:8000/api";
+const BASE = import.meta.env.VITE_API_URL+"/api";
+
 
 // ── Máscara de CNPJ ───────────────────────────────────────────────────────────
 function maskCNPJ(v: string): string {

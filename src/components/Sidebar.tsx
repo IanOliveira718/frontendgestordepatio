@@ -231,13 +231,6 @@ export function Sidebar() {
         title: "OPERAÇÃO",
         items: [
           {
-            label: "Portaria",
-            to: "/gate",
-            icon: DoorOpen,
-            show:
-              permissions.isAdmin || permissions.tipo === "portaria",
-          },
-          {
             label: "Pátios",
             to: "/patios",
             icon: Building2,
