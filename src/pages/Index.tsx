@@ -68,6 +68,12 @@ function parseDate(s: string) {
   return new Date(y, m - 1, d);
 }
 
+function getDescricaoPallet(agendamento: AgendamentoAPI | null, numeroPallet: number): string {
+  if (!agendamento) return "—";
+  const desc = agendamento.descricoes_pallets?.find((d) => d.ordem === numeroPallet);
+  return desc?.descricao ?? "—";
+}
+
 // ── Modal de detalhe de agendamento ──────────────────────────────────────────
 
 interface AgendamentoModalProps {
@@ -239,10 +245,28 @@ interface PalletModalProps {
 
 function PalletModal({ pallet, onClose, podeAlterarStatus, onUpdated }: PalletModalProps) {
   const [saving, setSaving] = useState(false);
+  const [agendamento, setAgendamento] = useState<AgendamentoAPI | null>(null);
+  const [loadingDesc, setLoadingDesc] = useState(false);
+
+  
+  useEffect(() => {
+  if (!pallet) {
+    setAgendamento(null);
+    return;
+  }
+
+  setLoadingDesc(true);
+
+  fetchAgendamentoById(String(pallet.agendamento))
+    .then(setAgendamento)
+    .catch(() => {})
+    .finally(() => setLoadingDesc(false));
+}, [pallet?.id]);
 
   if (!pallet) return null;
 
   const StatusIcon = STATUS_PALLET_ICONS[pallet.status];
+  const descricao = getDescricaoPallet(agendamento, pallet.numero_pallet);
 
   const ACOES: { status: StatusPallet; label: string; icon: React.ElementType; color: string }[] = [
     { status: "armazenado", label: "Marcar Armazenado", icon: CheckCircle2,  color: "border-green-500/30 bg-green-500/10 text-green-600 hover:bg-green-500/20" },
@@ -294,6 +318,15 @@ function PalletModal({ pallet, onClose, podeAlterarStatus, onUpdated }: PalletMo
               <span className="text-muted-foreground">Espaço</span>
               <span className="font-mono font-semibold">#{pallet.numero_espaco}</span>
             </div>
+            <div className="flex justify-between px-4 py-2.5">
+  <span className="text-muted-foreground">Descrição</span>
+
+  {loadingDesc ? (
+    <span className="font-medium">Carregando</span>
+  ) : (
+    <span className="font-medium">{descricao}</span>
+  )}
+</div>
             <div className="flex justify-between items-center px-4 py-2.5">
               <span className="text-muted-foreground">Status atual</span>
               <Badge variant="outline" className={cn("gap-1.5 text-xs", STATUS_PALLET_COLORS[pallet.status])}>
@@ -608,3 +641,4 @@ export default function Home() {
     </div>
   );
 }
+
