@@ -469,7 +469,6 @@ export default function Home() {
   const { user }    = useAuth();
   const permissions = usePermissions();
   const tipo        = permissions.tipo;
-
   const hoje    = format(new Date(), "yyyy-MM-dd");
   const hojeStr = format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const nome    = (user as any)?.first_name || (user as any)?.username || "Usuário";
@@ -490,7 +489,7 @@ export default function Home() {
         promises.push(
           fetchMeusAgendamentos(hoje, hoje).then(setAgendamentos)
         );
-      } else if (tipo === "administrador") {
+      } else if (tipo === "administrador" || tipo === "recebimento") {
         promises.push(
           fetchAgendamentosByDate(hoje).then(setAgendamentos)
         );
@@ -589,12 +588,23 @@ export default function Home() {
 
               {/* ── RECEBIMENTO: pallets de hoje ────────────────────────────── */}
               {tipo === "recebimento" && (
-                <Secao titulo="Pallets Agendados para Hoje" icone={Package} count={pallets.length}
-                  empty="Nenhum pallet agendado para hoje">
-                  {pallets.map((p) => (
-                    <PalletCard key={p.id} pallet={p} onClick={() => setPalletModal(p)} />
-                  ))}
-                </Secao>
+                <>
+                  <div className="grid gap-6 lg:grid-cols-2">
+                    <Secao titulo="Agendamentos Hoje" icone={Calendar} count={agendamentos.length}
+                      empty="Nenhum agendamento para hoje">
+                      {agendamentos.map((ag) => (
+                        <AgendamentoCard key={ag.id} ag={ag} onClick={() => setAgModal(ag)} />
+                      ))}
+                    </Secao>
+
+                    <Secao titulo="Pallets Hoje" icone={Package} count={pallets.length}
+                      empty="Nenhum pallet para hoje">
+                      {pallets.map((p) => (
+                        <PalletCard key={p.id} pallet={p} onClick={() => setPalletModal(p)} />
+                      ))}
+                    </Secao>
+                  </div>
+                </>
               )}
 
               {/* ── ADMIN: agendamentos + pallets ───────────────────────────── */}
