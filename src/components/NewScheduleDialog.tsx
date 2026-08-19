@@ -46,6 +46,7 @@ export function NewScheduleDialog({ children, onCreated }: NewScheduleDialogProp
     date:        "",
     time:        "",
     pallets:     "",
+    urgente:     0,
     nota_fiscal: "",
   });
 
@@ -118,6 +119,7 @@ export function NewScheduleDialog({ children, onCreated }: NewScheduleDialogProp
         date: formData.date,
         time: formData.time,
         pallets: parseInt(formData.pallets),
+        urgente: formData.urgente,
         nota_fiscal: formData.nota_fiscal.trim(),
         descricoes_pallets: descricoes.map((descricao, i) => ({
           ordem: i + 1,
@@ -141,7 +143,7 @@ export function NewScheduleDialog({ children, onCreated }: NewScheduleDialogProp
   };
 
   const resetForm = () => {
-    setFormData({ plate: "", driver: "", type: "", zone: "", date: "", time: "", pallets: "", nota_fiscal: "" });
+    setFormData({ plate: "", driver: "", type: "", zone: "", date: "",urgente: 0, time: "", pallets: "", nota_fiscal: "" });
     setPatioSelecionado("");
     setZonas([]);
     setDescricoes([]);

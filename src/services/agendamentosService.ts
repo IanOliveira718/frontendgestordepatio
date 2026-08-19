@@ -26,6 +26,7 @@ export interface AgendamentoAPI {
   type:        "entrada" | "saida";
   zone:        string;
   pallets:     number;
+  urgente:     boolean;
   nota_fiscal: string;
   tipo_unidade: TipoUnidade;
   status:      "agendado" | "confirmado" | "em_andamento" | "concluido" | "cancelado";
@@ -41,6 +42,7 @@ export interface AgendamentoPayload {
   date:         string;
   time:         string;
   pallets:      number;
+  urgente:      number;
   nota_fiscal:  string;
   tipo_unidade: TipoUnidade;
   descricoes_pallets: PalletDescricao[];

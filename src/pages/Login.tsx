@@ -37,23 +37,11 @@ export default function Login() {
         <div className="mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary-foreground/10">
           <Truck className="h-10 w-10" />
         </div>
-        <h1 className="mb-3 text-4xl font-bold">Gestor de Pátio</h1>
+        <h1 className="mb-3 text-4xl font-bold">Gestor de Pátio DFL</h1>
         <p className="max-w-sm text-center text-primary-foreground/70 text-lg">
-          Controle total sobre agendamentos, entradas e saídas do seu pátio logístico.
+          Controle total sobre agendamentos, entradas e saídas do pátio logístico da DFL.
         </p>
 
-        <div className="mt-12 grid grid-cols-3 gap-6 w-full max-w-sm">
-          {[
-            { label: "Agendamentos", value: "1.2k" },
-            { label: "Zonas ativas", value: "5" },
-            { label: "Eficiência", value: "98%" },
-          ].map((stat) => (
-            <div key={stat.label} className="rounded-xl bg-primary-foreground/10 p-4 text-center">
-              <p className="text-2xl font-bold">{stat.value}</p>
-              <p className="text-xs text-primary-foreground/60 mt-1">{stat.label}</p>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* Painel direito — formulário */}
